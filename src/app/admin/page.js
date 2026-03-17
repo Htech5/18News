@@ -168,7 +168,7 @@ export default function AdminDashboard() {
                     }
                   </td>
                   <td>{article.viewCount.toLocaleString("id-ID")}</td>
-                  <td>{formatDate(article.createdAt)}</td>
+                  <td>{formatDate(article.publishedAt)}</td>
                   <td>
                     <div className="actions">
                       <Link href={`/admin/articles/${article.id}/edit`} className="btn btn-ghost btn-sm">Edit</Link>

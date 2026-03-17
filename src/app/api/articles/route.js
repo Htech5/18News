@@ -27,7 +27,7 @@ export async function GET(req) {
         where,
         skip,
         take: limit,
-        orderBy: { createdAt: "desc" },
+        orderBy: { publishedAt: "desc" },
         include: {
           category: { select: { id: true, name: true } },
         },
@@ -53,7 +53,7 @@ export async function GET(req) {
 export async function POST(req) {
   try {
     const body = await req.json();
-    const { title, excerpt, content, imageUrl, status = "DRAFT", categoryId, isTrending } = body;
+    const { title, excerpt, content, imageUrl, categoryId, isTrending } = body;
 
     if (!title || !content || !categoryId) {
       return NextResponse.json(
@@ -71,9 +71,8 @@ export async function POST(req) {
         excerpt: excerpt || null,
         content,
         imageUrl: imageUrl || null,
-        status,
         categoryId: parseInt(categoryId),
-        publishedAt: status === "PUBLISHED" ? new Date() : null,
+        publishedAt: new Date(),
         isTrending: isTrending || false,
       },
       include: {

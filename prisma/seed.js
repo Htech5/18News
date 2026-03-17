@@ -16,7 +16,6 @@ async function main() {
       slug: "nextjs-15-rilis",
       excerpt: "Vercel merilis Next.js 15 yang kini sudah stabil untuk production.",
       content: "Konten lengkap artikel di sini...",
-      status: "PUBLISHED",
       publishedAt: new Date(),
       isTrending: true,
       categoryId: categories[0].id,

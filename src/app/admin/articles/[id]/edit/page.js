@@ -1,20 +1,23 @@
 "use client";
 
-import { useState, useEffect, use } from "react";
+import { useState, useEffect, use, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 
 export default function EditArticlePage({ params }) {
   const router = useRouter();
   const { id } = use(params);
+  const fileInputRef = useRef(null);
 
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(false);
   const [fetching, setFetching] = useState(true);
   const [toast, setToast] = useState(null);
   const [notFound, setNotFound] = useState(false);
+  const [imagePreview, setImagePreview] = useState(null);
+  const [imageFile, setImageFile] = useState(null);
   const [form, setForm] = useState({
-    title: "", excerpt: "", content: "", imageUrl: "", categoryId: "", isTrending: false,
+    title: "", excerpt: "", content: "", categoryId: "", isTrending: false,
   });
 
   useEffect(() => {
@@ -31,10 +34,14 @@ export default function EditArticlePage({ params }) {
 
         const a = articleJson.data;
         setForm({
-          title: a.title, excerpt: a.excerpt || "", content: a.content,
-          imageUrl: a.imageUrl || "", categoryId: String(a.categoryId),
+          title: a.title,
+          excerpt: a.excerpt || "",
+          content: a.content,
+          categoryId: String(a.categoryId),
           isTrending: a.isTrending,
         });
+
+        if (a.imageUrl) setImagePreview(a.imageUrl);
         if (categoryJson.success) setCategories(categoryJson.data);
       } catch {
         setNotFound(true);
@@ -50,6 +57,28 @@ export default function EditArticlePage({ params }) {
     setForm((prev) => ({ ...prev, [name]: type === "checkbox" ? checked : value }));
   }
 
+  function handleImageChange(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const allowedTypes = ["image/jpeg", "image/png", "image/webp", "image/gif"];
+    if (!allowedTypes.includes(file.type)) {
+      return showToast("Format tidak didukung. Gunakan JPG, PNG, atau WebP", "error");
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      return showToast("Ukuran file maksimal 5MB", "error");
+    }
+
+    setImageFile(file);
+    setImagePreview(URL.createObjectURL(file));
+  }
+
+  function handleRemoveImage() {
+    setImageFile(null);
+    setImagePreview(null);
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  }
+
   function showToast(message, type = "success") {
     setToast({ message, type });
     setTimeout(() => setToast(null), 3000);
@@ -63,15 +92,39 @@ export default function EditArticlePage({ params }) {
 
     setLoading(true);
     try {
+      let imageUrl = imagePreview;
+
+      if (imageFile) {
+        const uploadForm = new FormData();
+        uploadForm.append("file", imageFile);
+
+        const uploadRes = await fetch("/api/upload", {
+          method: "POST",
+          body: uploadForm,
+        });
+        const uploadJson = await uploadRes.json();
+
+        if (!uploadJson.success) {
+          setLoading(false);
+          return showToast(uploadJson.error || "Gagal upload gambar", "error");
+        }
+
+        imageUrl = uploadJson.data.imageUrl;
+      }
+
+      if (!imagePreview && !imageFile) imageUrl = null;
+
       const res = await fetch(`/api/articles/${id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           ...form,
-          status: "PUBLISHED",
+          imageUrl,
           categoryId: parseInt(form.categoryId),
         }),
       });
+        console.log("Image Url yang di pakai:", imageUrl)
+
       const json = await res.json();
       if (json.success) {
         showToast("Artikel berhasil diupdate!");
@@ -79,7 +132,8 @@ export default function EditArticlePage({ params }) {
       } else {
         showToast(json.error || "Gagal update", "error");
       }
-    } catch {
+    } catch (err) {
+      console.error(err);
       showToast("Terjadi kesalahan", "error");
     } finally {
       setLoading(false);
@@ -134,8 +188,27 @@ export default function EditArticlePage({ params }) {
           </div>
 
           <div className="form-group">
-            <label className="form-label" htmlFor="imageUrl">URL Gambar</label>
-            <input id="imageUrl" name="imageUrl" className="form-input" type="url" placeholder="https://..." value={form.imageUrl} onChange={handleChange} />
+            <label className="form-label">Gambar Artikel</label>
+            {imagePreview ? (
+              <div className="image-preview-wrap">
+                <img src={imagePreview} alt="Preview" className="image-preview" />
+                <button type="button" className="image-remove-btn" onClick={handleRemoveImage}>
+                  ✕ Hapus
+                </button>
+              </div>
+            ) : (
+              <div className="image-upload-area" onClick={() => fileInputRef.current?.click()}>
+                <span className="image-upload-text">Klik untuk upload gambar</span>
+                <span className="image-upload-hint">JPG, PNG, WebP — maks 5MB</span>
+              </div>
+            )}
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/jpeg,image/png,image/webp,image/gif"
+              onChange={handleImageChange}
+              style={{ display: "none" }}
+            />
           </div>
         </div>
 

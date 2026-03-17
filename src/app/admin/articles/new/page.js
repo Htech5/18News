@@ -1,16 +1,19 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect,  useRef } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 
 export default function NewArticlePage() {
   const router = useRouter();
+  const fileInputRef = useRef(null);
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(false);
   const [toast, setToast] = useState(null);
+  const [imagePreview, setImagePreview] = useState(null);
+  const [imageFile, setImageFile] = useState(null);
   const [form, setForm] = useState({
-    title: "", excerpt: "", content: "", imageUrl: "", categoryId: "", isTrending: false,
+    title: "", excerpt: "", content: "", categoryId: "", isTrending: false,
   });
 
   useEffect(() => {
@@ -23,6 +26,34 @@ export default function NewArticlePage() {
     const { name, value, type, checked } = e.target;
     setForm((prev) => ({ ...prev, [name]: type === "checkbox" ? checked : value }));
   }
+
+
+
+  function handleImageChange(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const allowedTypes = ["image/jpeg", "image/png", "image/webp", "image/gif"];
+    if (!allowedTypes.includes(file.type)) {
+      return showToast("Format tidak didukung. Gunakan JPG, PNG, atau WebP", "error");
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      return showToast("Ukuran file maksimal 5MB", "error");
+    }
+
+    setImageFile(file);
+    setImagePreview(URL.createObjectURL(file));
+  }
+
+
+
+  function handleRemoveImage() {
+    setImageFile(null);
+    setImagePreview(null);
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  }
+
+
 
   function showToast(message, type = "success") {
     setToast({ message, type });
@@ -37,15 +68,38 @@ export default function NewArticlePage() {
 
     setLoading(true);
     try {
+      let imageUrl = imagePreview;
+      if (imageFile) {
+        const uploadForm = new FormData();
+        uploadForm.append("file", imageFile);
+
+        const uploadRes = await fetch("/api/upload", {
+          method: "POST",
+          body: uploadForm,
+        });
+
+        const uploadJson = await uploadRes.json();
+
+        
+      if (!uploadJson.success) {
+          setLoading(false);
+          return showToast(uploadJson.error || "Gagal upload gambar", "error");
+        }
+
+        imageUrl = uploadJson.data.imageUrl;
+      }
+    
+      
       const res = await fetch("/api/articles", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           ...form,
-          status: "PUBLISHED",
+          imageUrl,
           categoryId: parseInt(form.categoryId),
         }),
       });
+
       const json = await res.json();
       if (json.success) {
         showToast("Artikel berhasil disimpan!");
@@ -99,8 +153,27 @@ export default function NewArticlePage() {
           </div>
 
           <div className="form-group">
-            <label className="form-label" htmlFor="imageUrl">URL Gambar</label>
-            <input id="imageUrl" name="imageUrl" className="form-input" type="url" placeholder="https://..." value={form.imageUrl} onChange={handleChange} />
+            <label className="form-label">Gambar Artikel</label>
+            {imagePreview ? (
+              <div className="image-preview-wrap">
+                <img src={imagePreview} alt="Preview" className="image-preview" />
+                <button type="button" className="image-remove-btn" onClick={handleRemoveImage}>
+                  ✕ Hapus
+                </button>
+              </div>
+            ) : (
+              <div className="image-upload-area" onClick={() => fileInputRef.current?.click()}>
+                <span className="image-upload-text">Klik untuk upload gambar</span>
+                <span className="image-upload-hint">JPG, PNG, WebP — maks 5MB</span>
+              </div>
+            )}
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/jpeg,image/png,image/webp,image/gif"
+              onChange={handleImageChange}
+              style={{ display: "none" }}
+            />
           </div>
         </div>
 

@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { uniqueArticleSlug } from "@/lib/slug";
 
+console.log("route [id] loaded");
+
 export async function GET(_, { params }) {
   try {
     const { id: rawId } = await params;
@@ -29,12 +31,17 @@ export async function PUT(req, { params }) {
     const { id: rawId } = await params;
     const id = parseInt(rawId);
     const body = await req.json();
-    const { title, excerpt, content, imageUrl, status, categoryId, isTrending } = body;
+    console.log("API PUT body:", body);
+    const { title, excerpt, content, imageUrl, categoryId, isTrending } = body;
+
+    console.log("imageUrl diterima API:", imageUrl);
 
     const existing = await prisma.article.findUnique({
       where: { id },
-      select: { title: true, status: true },
+      select: { title: true, publishedAt: true },
     });
+
+    const publishedAt = existing.publishedAt ?? new Date();
 
     if (!existing) {
       return NextResponse.json({ success: false, error: "Artikel tidak ditemukan" }, { status: 404 });
@@ -45,10 +52,6 @@ export async function PUT(req, { params }) {
         ? await uniqueArticleSlug(title, id)
         : undefined;
 
-    const publishedAt =
-      status === "PUBLISHED" && existing.status !== "PUBLISHED"
-        ? new Date()
-        : undefined;
 
     const updated = await prisma.article.update({
       where: { id },
@@ -58,7 +61,6 @@ export async function PUT(req, { params }) {
         ...(excerpt !== undefined && { excerpt }),
         ...(content && { content }),
         ...(imageUrl !== undefined && { imageUrl }),
-        ...(status && { status }),
         ...(categoryId && { categoryId: parseInt(categoryId) }),
         ...(publishedAt && { publishedAt }),
         ...(isTrending !== undefined && { isTrending }),
