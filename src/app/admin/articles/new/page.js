@@ -96,7 +96,7 @@ export default function NewArticlePage() {
         body: JSON.stringify({
           ...form,
           imageUrl,
-          categoryId: parseInt(form.categoryId),
+          categoryId: form.categoryId,
         }),
       });
 

@@ -120,7 +120,7 @@ export default function EditArticlePage({ params }) {
         body: JSON.stringify({
           ...form,
           imageUrl,
-          categoryId: parseInt(form.categoryId),
+          categoryId: form.categoryId,
         }),
       });
         console.log("Image Url yang di pakai:", imageUrl)

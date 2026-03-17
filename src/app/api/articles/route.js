@@ -71,7 +71,7 @@ export async function POST(req) {
         excerpt: excerpt || null,
         content,
         imageUrl: imageUrl || null,
-        categoryId: parseInt(categoryId),
+        categoryId,
         publishedAt: new Date(),
         isTrending: isTrending || false,
       },

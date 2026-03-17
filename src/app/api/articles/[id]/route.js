@@ -7,7 +7,7 @@ console.log("route [id] loaded");
 export async function GET(_, { params }) {
   try {
     const { id: rawId } = await params;
-    const id = parseInt(rawId);
+    const id = rawId;
 
     const article = await prisma.article.findUnique({
       where: { id },
@@ -29,7 +29,7 @@ export async function GET(_, { params }) {
 export async function PUT(req, { params }) {
   try {
     const { id: rawId } = await params;
-    const id = parseInt(rawId);
+    const id = rawId;
     const body = await req.json();
     console.log("API PUT body:", body);
     const { title, excerpt, content, imageUrl, categoryId, isTrending } = body;
@@ -61,7 +61,7 @@ export async function PUT(req, { params }) {
         ...(excerpt !== undefined && { excerpt }),
         ...(content && { content }),
         ...(imageUrl !== undefined && { imageUrl }),
-        ...(categoryId && { categoryId: parseInt(categoryId) }),
+        ...(categoryId && { categoryId }),
         ...(publishedAt && { publishedAt }),
         ...(isTrending !== undefined && { isTrending }),
       },
@@ -79,7 +79,7 @@ export async function PUT(req, { params }) {
 export async function DELETE(_, { params }) {
   try {
     const { id: rawId } = await params;
-    const id = parseInt(rawId);
+    const id = rawId;
     await prisma.article.delete({ where: { id } });
     return NextResponse.json({ success: true, message: "Artikel berhasil dihapus" });
   } catch (err) {
