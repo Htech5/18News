@@ -30,7 +30,7 @@ async function main() {
 
 main()
   .catch((e) => {
-    console.error("❌ Error seeding admin:", e);
+    console.error(" Error seeding admin:", e);
     process.exit(1);
   })
   .finally(() => prisma.$disconnect());

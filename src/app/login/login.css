@@ -398,20 +398,37 @@
   to { transform: rotate(360deg); }
 }
 
-/* ── RESPONSIVE ── */
+/* ── RESPONSIVE — TABLET & MOBILE ── */
 @media (max-width: 768px) {
+  .login-page {
+    padding: 16px;
+    padding-top: calc(16px + env(safe-area-inset-top, 0px));
+    padding-bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+    align-items: flex-start;
+  }
+
   .login-container {
     flex-direction: column;
     min-height: auto;
-    max-height: 95vh;
+    max-height: none; /* allow full scroll, don't clip */
+    width: 100%;
+    max-width: 100%;
+    margin-top: auto;
+    margin-bottom: auto;
   }
 
   .login-branding {
-    padding: 28px 24px;
+    padding: 24px 20px;
+    min-height: auto;
+  }
+
+  .branding-logo {
+    margin-bottom: 12px;
   }
 
   .branding-title {
-    font-size: 22px;
+    font-size: 20px;
+    margin-bottom: 0;
   }
 
   .branding-desc,
@@ -421,24 +438,125 @@
   }
 
   .login-form-panel {
-    padding: 32px 24px;
+    padding: 28px 24px;
+  }
+
+  .login-form {
+    max-width: 100%;
+  }
+
+  /* Prevent iOS auto-zoom on input focus */
+  .login-input {
+    font-size: 16px;
+  }
+
+  /* Touch-friendly button */
+  .login-btn {
+    min-height: 48px;
+    padding: 14px 20px;
+    font-size: 15px;
+  }
+
+  .toggle-password {
+    padding: 8px;
+    min-width: 44px;
+    min-height: 44px;
+  }
+
+  .form-icon {
+    width: 46px;
+    height: 46px;
+    border-radius: 12px;
+    margin-bottom: 12px;
+  }
+
+  .form-header {
+    margin-bottom: 24px;
   }
 }
 
-@media (max-width: 480px) {
+/* ── RESPONSIVE — iPhone 14 Pro Max & Small Phones (≤430px) ── */
+@media (max-width: 430px) {
   .login-page {
-    padding: 16px;
+    padding: 12px;
+    padding-top: calc(12px + env(safe-area-inset-top, 0px));
+    padding-bottom: calc(12px + env(safe-area-inset-bottom, 0px));
   }
 
   .login-container {
-    border-radius: 12px;
+    border-radius: 14px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.04);
+  }
+
+  .login-branding {
+    padding: 20px 18px;
+  }
+
+  .logo-text {
+    font-size: 16px;
+  }
+
+  .branding-title {
+    font-size: 18px;
   }
 
   .login-form-panel {
-    padding: 28px 20px;
+    padding: 24px 18px;
   }
 
   .form-title {
-    font-size: 20px;
+    font-size: 19px;
+  }
+
+  .form-subtitle {
+    font-size: 12.5px;
+  }
+
+  .login-label {
+    font-size: 10.5px;
+    letter-spacing: 0.6px;
+  }
+
+  .login-input {
+    padding: 13px 14px 13px 40px;
+    border-radius: 10px;
+  }
+
+  .login-field {
+    margin-bottom: 16px;
+  }
+
+  .login-error {
+    font-size: 12.5px;
+    padding: 10px 12px;
+    margin-bottom: 16px;
+  }
+
+  .login-btn {
+    margin-top: 20px;
+    border-radius: 10px;
+  }
+}
+
+/* ── Extra small phones (≤375px, iPhone SE, etc) ── */
+@media (max-width: 375px) {
+  .login-page {
+    padding: 8px;
+  }
+
+  .login-branding {
+    padding: 16px 14px;
+  }
+
+  .branding-title {
+    font-size: 16px;
+  }
+
+  .login-form-panel {
+    padding: 20px 14px;
+  }
+
+  .form-title {
+    font-size: 18px;
   }
 }
