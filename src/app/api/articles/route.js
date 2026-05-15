@@ -2,6 +2,17 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { uniqueArticleSlug } from "@/lib/slug";
 
+// CORS headers for cross-origin frontend access
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
+  "Access-Control-Allow-Headers": "Content-Type, Authorization",
+};
+
+export async function OPTIONS() {
+  return NextResponse.json({}, { headers: corsHeaders });
+}
+
 export async function GET(req) {
   try {
     const { searchParams } = req.nextUrl;
@@ -10,8 +21,11 @@ export async function GET(req) {
     const limit = Math.min(100, parseInt(searchParams.get("limit") || "10"));
     const status = searchParams.get("status") || undefined;
     const search = searchParams.get("search") || undefined;
+    const category = searchParams.get("category") || undefined;
+    const isTrending = searchParams.get("isTrending");
     const skip = (page - 1) * limit;
 
+    // Build where clause with category slug and isTrending filters
     const where = {
       ...(status && { status }),
       ...(search && {
@@ -20,6 +34,10 @@ export async function GET(req) {
           { excerpt: { contains: search } },
         ],
       }),
+      ...(category && {
+        category: { slug: category },
+      }),
+      ...(isTrending === "true" && { isTrending: true }),
     };
 
     const [articles, total] = await prisma.$transaction([
@@ -29,7 +47,7 @@ export async function GET(req) {
         take: limit,
         orderBy: { publishedAt: "desc" },
         include: {
-          category: { select: { id: true, name: true } },
+          category: { select: { id: true, name: true, slug: true } },
         },
       }),
       prisma.article.count({ where }),
@@ -44,9 +62,9 @@ export async function GET(req) {
         limit,
         totalPages: Math.ceil(total / limit),
       },
-    });
+    }, { headers: corsHeaders });
   } catch (err) {
-    return NextResponse.json({ success: false, error: err.message }, { status: 500 });
+    return NextResponse.json({ success: false, error: err.message }, { status: 500, headers: corsHeaders });
   }
 }
 

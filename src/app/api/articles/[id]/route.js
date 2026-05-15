@@ -2,7 +2,15 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { uniqueArticleSlug } from "@/lib/slug";
 
-console.log("route [id] loaded");
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
+  "Access-Control-Allow-Headers": "Content-Type, Authorization",
+};
+
+export async function OPTIONS() {
+  return NextResponse.json({}, { headers: corsHeaders });
+}
 
 export async function GET(_, { params }) {
   try {
@@ -12,17 +20,23 @@ export async function GET(_, { params }) {
     const article = await prisma.article.findUnique({
       where: { id },
       include: {
-        category: { select: { id: true, name: true } },
+        category: { select: { id: true, name: true, slug: true } },
       },
     });
 
     if (!article) {
-      return NextResponse.json({ success: false, error: "Artikel tidak ditemukan" }, { status: 404 });
+      return NextResponse.json({ success: false, error: "Artikel tidak ditemukan" }, { status: 404, headers: corsHeaders });
     }
 
-    return NextResponse.json({ success: true, data: article });
+    // Increment view count
+    await prisma.article.update({
+      where: { id },
+      data: { viewCount: { increment: 1 } },
+    });
+
+    return NextResponse.json({ success: true, data: article }, { headers: corsHeaders });
   } catch (err) {
-    return NextResponse.json({ success: false, error: err.message }, { status: 500 });
+    return NextResponse.json({ success: false, error: err.message }, { status: 500, headers: corsHeaders });
   }
 }
 
